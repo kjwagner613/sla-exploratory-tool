@@ -59,6 +59,24 @@
       }
   }
 
+.headercontent {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+  }
+
+  .header-logo {
+      max-width: 300px;
+      height: auto;
+      margin: 0;
+  }
+
+  .title {
+      margin: 0;
+  }
+
+
   .card {
       flex: 1;
       background: var(--card);
@@ -249,6 +267,6 @@
 
   .instructions {
       display: flex;
-      
+
 
   }
