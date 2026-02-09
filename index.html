@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <title>SLA Tool</title>
+</head>
+
+<body>
+    </head>
+
+    <body>
+        <div class="page">
+            <header>
+                <h1>SLA Configuration Tool</h1>
+                <p class="subtitle">
+                    Explore and tune your SLA posture. Only change inputs — the engine handles the math and
+                    relationships.
+                </p>
+            </header>
+
+            <div class="instructions">
+                <div class="card equations">
+                    <h2>How the SLA Math Works</h2>
+                    <p>Variables:</p>
+                    <ul>
+                        <li>E = Elapsed Days</li>
+                        <li>A = Allowed SLA Days</li>
+                        <li>D = Expected Duration</li>
+                        <li>θ = Grace Window</li>
+                        <li>W = Weight</li>
+                        <li>ΣDᵢ = Sum of Delay Penalties</li>
+                    </ul>
+                    <p>Equations (natural language style):</p>
+                    <ul>
+                        <li>Time Risk = E / A</li>
+                        <li>Stage Risk = E / (D + θ) × W × Severity</li>
+                        <li>Delay Risk = ΣDᵢ</li>
+                        <li>Total SLA Score = Time Risk + Stage Risk + Delay Risk</li>
+                    </ul>
+                    <p class="footer-note">
+                        This tool is for exploration, not policy. Use it to see how your choices behave before
+                        committing to configuration values.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h2>How to Use This Tool</h2>
+                    <ul>
+                        <li>Set duration logic values (Customer, Default, Failsafe SLA).</li>
+                        <li>Configure stage: expected duration, grace window, weight, and severity.</li>
+                        <li>Enter elapsed days for a scenario.</li>
+                        <li>Toggle delay vectors on/off and adjust penalties.</li>
+                        <li>Watch Time, Stage, Delay, and Total SLA scores update live.</li>
+                        <li>Use the color status as a quick posture indicator.</li>
+                    </ul>
+                    <p class="footer-note">
+                        Once you like how it behaves, document your chosen values and implement them in your SLA
+                        configuration store (e.g., WF‑SLA‑Stage‑Config and WF‑SLA‑Duration‑Config).
+                    </p>
+                </div>
+
+
+            </div>
+
+            <div class="layout">
+                <!-- LEFT: Inputs -->
+                <div>
+                    <div class="card">
+                        <h2>Duration Logic Inputs <span class="badge">Editable</span></h2>
+                        <p>These values determine the total allowed SLA days for a ticket.</p>
+                        <div class="field-row">
+                            <div>
+                                <label for="customerSla">Customer Master SLA (days)</label>
+                                <input type="number" id="customerSla" value="0" min="0" step="1" />
+                            </div>
+                            <div>
+                                <label for="defaultSla">Default SLA (WF‑SLA‑Duration‑Config)</label>
+                                <input type="number" id="defaultSla" value="10" min="0" step="1" />
+                            </div>
+                            <div>
+                                <label for="failsafeSla">Failsafe SLA</label>
+                                <input type="number" id="failsafeSla" value="30" min="0" step="1" />
+                            </div>
+                        </div>
+                        <p class="footer-note">
+                            Logic: use Customer SLA if &gt; 0, otherwise Default SLA if &gt; 0, otherwise Failsafe.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h2>Stage Configuration <span class="badge">Editable</span></h2>
+                        <p>Configure how this stage behaves in the SLA engine.</p>
+                        <div class="field-row">
+                            <div>
+                                <label for="expectedDuration">Expected Duration (D, days)</label>
+                                <input type="number" id="expectedDuration" value="5" min="0" step="0.5" />
+                            </div>
+                            <div>
+                                <label for="grace">Grace Window (θ, days)</label>
+                                <input type="number" id="grace" value="1" min="0" step="0.5" />
+                            </div>
+                            <div>
+                                <label for="weight">Weight (W)</label>
+                                <input type="number" id="weight" value="1.0" min="0" step="0.1" />
+                            </div>
+                        </div>
+
+                        <div class="field-row-2">
+                            <div>
+                                <label for="elapsedDays">Elapsed Days (E)</label>
+                                <input type="number" id="elapsedDays" value="3" min="0" step="0.5" />
+                            </div>
+                            <div>
+                                <label for="severity">Severity (optional, multiplier)</label>
+                                <input type="number" id="severity" value="1.0" min="0" step="0.1" />
+                            </div>
+                        </div>
+                        <p class="footer-note">
+                            Stage Risk uses grace as a buffer: E / (D + θ) × W × Severity.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h2>Delay Vectors <span class="badge">Editable</span></h2>
+                        <p>Select delays that occurred and tune their penalties. Delay risk is additive.</p>
+
+                        <div id="delayVectors">
+                            <div class="delay-row">
+                                <span>No tech available</span>
+                                <input type="number" class="delay-penalty" value="0.4" step="0.1" />
+                                <label><input type="checkbox" class="delay-toggle" />Apply</label>
+                            </div>
+                            <div class="delay-row">
+                                <span>Parts unavailable</span>
+                                <input type="number" class="delay-penalty" value="0.7" step="0.1" />
+                                <label><input type="checkbox" class="delay-toggle" />Apply</label>
+                            </div>
+                            <div class="delay-row">
+                                <span>Parts backordered</span>
+                                <input type="number" class="delay-penalty" value="1.2" step="0.1" />
+                                <label><input type="checkbox" class="delay-toggle" />Apply</label>
+                            </div>
+                            <div class="delay-row">
+                                <span>Customer‑requested pause</span>
+                                <input type="number" class="delay-penalty" value="0.2" step="0.1" />
+                                <label><input type="checkbox" class="delay-toggle" />Apply</label>
+                            </div>
+                        </div>
+
+                        <p class="footer-note">
+                            Delay Risk = Σ of penalties for all selected delay vectors.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Results & Explanation -->
+                <div>
+                    <div class="card">
+                        <h2>Results</h2>
+                        <p>Live SLA posture based on your current inputs.</p>
+
+                        <div class="results-grid">
+                            <div class="metric">
+                                <div class="metric-label">Allowed SLA Days (A)</div>
+                                <div class="metric-value" id="allowedSlaDisplay">–</div>
+                                <div class="metric-sub">Resolved from duration logic</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Time Risk</div>
+                                <div class="metric-value" id="timeRiskDisplay">–</div>
+                                <div class="metric-sub">E / A</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Stage Risk</div>
+                                <div class="metric-value" id="stageRiskDisplay">–</div>
+                                <div class="metric-sub">E / (D + θ) × W × Severity</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Delay Risk</div>
+                                <div class="metric-value" id="delayRiskDisplay">–</div>
+                                <div class="metric-sub">Σ delay penalties</div>
+                            </div>
+                        </div>
+
+                        <div class="metric" style="margin-top:12px;">
+                            <div class="metric-label">Total SLA Score</div>
+                            <div class="metric-value" id="totalScoreDisplay">–</div>
+                            <div class="metric-sub">Time Risk + Stage Risk + Delay Risk</div>
+                            <div id="statusPill" class="status-pill status-green" style="display:none;">
+                                <span></span><span id="statusText">On Track</span>
+                            </div>
+                        </div>
+
+                        <p class="footer-note">
+                            Thresholds (example): &lt; 1.0 = Green, 1.0–1.2 = Yellow, &gt; 1.2 = Red. Tune these in
+                            policy, not here.
+                        </p>
+                    </div>
+
+
+
+                </div>
+            </div>
+        </div>
+
+    </body>
+
+</html>
